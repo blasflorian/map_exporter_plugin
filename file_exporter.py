@@ -10,9 +10,12 @@ from qgis.utils import iface
 
 class FileExporter:
 
-    @staticmethod
-    def load_composition():
-        template_path = FileExporter.get_plugin_path() + "/resources/tmpl.qpt"
+    def __init__(self, dockwidget):
+        self.templates = {"Only map": "/resources/tmpl.qpt", "Map with legend": "/resources/tmpl_legend.qpt"}
+        self.dockwidget = dockwidget
+
+    def load_composition(self):
+        template_path = self.get_plugin_path() + self.templates[self.dockwidget.comboBox_template.currentText()]
         template_file = open(template_path, "r")
         content = template_file.read()
         template_file.close()
@@ -33,27 +36,35 @@ class FileExporter:
         map_item = composition.getComposerItemById("map")
         map_item.setMapCanvas(iface.mapCanvas())
         map_item.zoomToExtent(iface.mapCanvas().extent())
+
+        # set legend
+        try:
+            legend_item = composition.getComposerItemById("legend")
+            legend_item.updateLegend()
+        except AttributeError:  # in case first template was selected
+            pass
+
         composition.refreshItems()
         return composition
 
-    @staticmethod
-    def create_png(path):
-        c = FileExporter.load_composition()
+    def create_png(self, path):
+        c = self.load_composition()
         img = c.printPageAsRaster(0)
         if img.save(path, "png"):
             iface.messageBar().pushMessage("PNG file successfully exported!", duration=5)
         else:
             iface.messageBar().pushMessage("Error while exporting png file", duration=5)
 
-    @staticmethod
-    def create_pdf(path):
-        c = FileExporter.load_composition()
+    def create_pdf(self, path):
+        c = self.load_composition()
         if c.exportAsPDF(path):
             iface.messageBar().pushMessage("PDF file successfully exported", duration=5)
         else:
             iface.messageBar().pushMessage("Error while exporting pdf file", duration=5)
 
-    @staticmethod
-    def get_plugin_path():
+    def get_templates(self):
+        return [template for template in self.templates.keys()]
+
+    def get_plugin_path(self):
         return os.path.dirname(os.path.realpath(__file__))
 

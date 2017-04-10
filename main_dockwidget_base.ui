@@ -7,7 +7,7 @@
     <x>0</x>
     <y>0</y>
     <width>360</width>
-    <height>266</height>
+    <height>306</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -15,8 +15,29 @@
   </property>
   <widget class="QWidget" name="dockWidgetContents">
    <layout class="QGridLayout" name="gridLayout">
-    <item row="1" column="1">
-     <widget class="QLineEdit" name="lineEdit_dir"/>
+    <item row="4" column="1">
+     <widget class="QLineEdit" name="lineEdit_filename"/>
+    </item>
+    <item row="2" column="1">
+     <widget class="QLabel" name="label_filename">
+      <property name="text">
+       <string>File Name:</string>
+      </property>
+     </widget>
+    </item>
+    <item row="8" column="1">
+     <widget class="QCheckBox" name="checkBox_png">
+      <property name="text">
+       <string>PNG</string>
+      </property>
+     </widget>
+    </item>
+    <item row="10" column="1">
+     <widget class="QCheckBox" name="checkBox_all">
+      <property name="text">
+       <string>Export all features of selected layers</string>
+      </property>
+     </widget>
     </item>
     <item row="1" column="2">
      <widget class="QPushButton" name="pushButton_dir">
@@ -25,51 +46,40 @@
       </property>
      </widget>
     </item>
-    <item row="4" column="1">
-     <widget class="QLineEdit" name="lineEdit_filename"/>
-    </item>
-    <item row="8" column="1">
-     <widget class="QCheckBox" name="checkBox_all">
-      <property name="text">
-       <string>Export all features of selected layers</string>
-      </property>
-     </widget>
-    </item>
-    <item row="2" column="1">
-     <widget class="QLabel" name="label_filename">
-      <property name="text">
-       <string>File Name</string>
-      </property>
-     </widget>
+    <item row="1" column="1">
+     <widget class="QLineEdit" name="lineEdit_dir"/>
     </item>
     <item row="6" column="1">
-     <widget class="QCheckBox" name="checkBox_png">
+     <widget class="QComboBox" name="comboBox_template"/>
+    </item>
+    <item row="7" column="1">
+     <widget class="QCheckBox" name="checkBox_pdf">
       <property name="text">
-       <string>PNG</string>
+       <string>PDF</string>
       </property>
      </widget>
     </item>
-    <item row="4" column="2">
-     <widget class="QComboBox" name="comboBox_fields"/>
-    </item>
-    <item row="9" column="2">
+    <item row="11" column="2">
      <widget class="QPushButton" name="pushButton_export">
       <property name="text">
        <string>Export</string>
       </property>
      </widget>
     </item>
+    <item row="4" column="2">
+     <widget class="QComboBox" name="comboBox_fields"/>
+    </item>
     <item row="0" column="1">
      <widget class="QLabel" name="label_dir">
       <property name="text">
-       <string>Directory</string>
+       <string>Directory:</string>
       </property>
      </widget>
     </item>
     <item row="5" column="1">
-     <widget class="QCheckBox" name="checkBox_pdf">
+     <widget class="QLabel" name="label_template">
       <property name="text">
-       <string>PDF</string>
+       <string>Choose Template:</string>
       </property>
      </widget>
     </item>
