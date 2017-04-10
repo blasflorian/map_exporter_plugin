@@ -293,8 +293,7 @@ class MapExporter:
         for feat in layer.getFeatures():
             self.dockwidget.lineEdit_filename.setText(usr_text.format(layername=layer.name(), choose_field=str(feat.attribute(self.dockwidget.comboBox_fields.currentText()))))
             layer.setSelectedFeatures([feat.id()])
-            box = layer.boundingBoxOfSelected()
-            self.iface.mapCanvas().setExtent(box)
+            self.iface.mapCanvas().zoomToSelected()
             self.iface.mapCanvas().refresh()
             layer.removeSelection()
             self.export()
