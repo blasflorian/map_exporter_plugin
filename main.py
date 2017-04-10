@@ -76,7 +76,7 @@ class MapExporter:
         self.pluginIsActive = False
         self.dockwidget = None
         self.cfg_file = self.get_plugin_path() + "/resources/usr.cfg"
-
+        self.file_exporter = None
 
     # noinspection PyMethodMayBeStatic
     def tr(self, message):
@@ -92,7 +92,6 @@ class MapExporter:
         """
         # noinspection PyTypeChecker,PyArgumentList,PyCallByClass
         return QCoreApplication.translate('MapExporter', message)
-
 
     def add_action(
         self,
@@ -226,6 +225,7 @@ class MapExporter:
             if self.dockwidget == None:
                 # Create the dockwidget (after translation) and keep reference
                 self.dockwidget = MapExporterDockWidget()
+                self.file_exporter = FileExporter(self.dockwidget)
                 self.load_cfg()
 
             # connect signals
@@ -237,7 +237,9 @@ class MapExporter:
             # connect to provide cleanup on closing of dockwidget
             self.dockwidget.closingPlugin.connect(self.onClosePlugin)
 
+            # adjust combo boxes
             self.dockwidget.comboBox_fields.setVisible(False)
+            self.dockwidget.comboBox_template.addItems(self.file_exporter.get_templates())
 
             # show the dockwidget
             # TODO: fix to allow choice of dock location
@@ -309,17 +311,17 @@ class MapExporter:
                 filepath_png = self.dockwidget.lineEdit_dir.text() + "/" + self.dockwidget.lineEdit_filename.text() + ".png"
                 filepath_pdf = self.dockwidget.lineEdit_dir.text() + "/" + self.dockwidget.lineEdit_filename.text() + ".pdf"
                 if self.file_exists(filepath_png):
-                    FileExporter.create_png(filepath_png)
+                    self.file_exporter.create_png(filepath_png)
                 if self.file_exists(filepath_pdf):
-                    FileExporter.create_pdf(filepath_pdf)
+                    self.file_exporter.create_pdf(filepath_pdf)
             elif png:
                 filepath = self.dockwidget.lineEdit_dir.text() + "/" + self.dockwidget.lineEdit_filename.text() + ".png"
                 if self.file_exists(filepath):
-                    FileExporter.create_png(filepath)
+                    self.file_exporter.create_png(filepath)
             elif pdf:
                 filepath = self.dockwidget.lineEdit_dir.text() + "/" + self.dockwidget.lineEdit_filename.text() + ".pdf"
                 if self.file_exists(filepath):
-                    FileExporter.create_pdf(filepath)
+                    self.file_exporter.create_pdf(filepath)
         else:
             self.iface.messageBar().pushMessage("Directory does not exist or no file name given!")
         self.dockwidget.pushButton_export.setEnabled(True)
