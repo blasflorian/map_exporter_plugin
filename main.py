@@ -291,7 +291,7 @@ class MapExporter:
                 return
         self.iface.legendInterface().setLayerVisible(layer, True)   # just in case user forgot
         for feat in layer.getFeatures():
-            self.dockwidget.lineEdit_filename.setText(usr_text.format(layername=layer.name(), choose_fields=str(feat.attribute(self.dockwidget.comboBox_fields.currentText()))))
+            self.dockwidget.lineEdit_filename.setText(usr_text.format(layername=layer.name(), choose_field=str(feat.attribute(self.dockwidget.comboBox_fields.currentText()))))
             layer.setSelectedFeatures([feat.id()])
             box = layer.boundingBoxOfSelected()
             self.iface.mapCanvas().setExtent(box)
@@ -320,7 +320,7 @@ class MapExporter:
             elif pdf:
                 filepath = self.dockwidget.lineEdit_dir.text() + "/" + self.dockwidget.lineEdit_filename.text() + ".pdf"
                 if self.file_exists(filepath):
-                    FileExporter.create_png(filepath)
+                    FileExporter.create_pdf(filepath)
         else:
             self.iface.messageBar().pushMessage("Directory does not exist or no file name given!")
         self.dockwidget.pushButton_export.setEnabled(True)
