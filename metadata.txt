@@ -16,8 +16,8 @@ email=florian.blas@gmail.com
 
 about=A Plugin that exports the current map as pdf or png (or both).
 
-tracker= 
-repository= 
+tracker= https://github.com/blasflorian/map_exporter_plugin/issues
+repository= https://github.com/blasflorian/map_exporter_plugin
 # End of mandatory metadata
 
 # Recommended items:
