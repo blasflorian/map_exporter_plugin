@@ -65,7 +65,6 @@ class FileExporter:
     def get_templates(self):
         return [template for template in self.templates.keys()]
 
-
     def get_plugin_path(self):
         return os.path.dirname(os.path.realpath(__file__))
 
