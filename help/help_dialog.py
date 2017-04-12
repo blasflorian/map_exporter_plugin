@@ -8,7 +8,7 @@
 # WARNING! All changes made in this file will be lost!
 
 from PyQt4 import QtCore, QtGui
-
+from PyQt4.QtCore import QUrl
 from MapExporter.plugin_path import get_plugin_path
 
 try:
@@ -29,7 +29,7 @@ class Ui_HelpDialog(object):
         self.webView.setGeometry(QtCore.QRect(0, 0, 631, 471))
         self.webView.setUrl(QtCore.QUrl(_fromUtf8("about:blank")))
         self.webView.setObjectName(_fromUtf8("webView"))
-        self.webView.setHtml(get_plugin_path() + "help/help.html")
+        self.webView.load(QUrl("file:///" + get_plugin_path() + "/help/help.html"))
 
         self.retranslateUi(HelpDialog)
         QtCore.QObject.connect(self.buttonBox, QtCore.SIGNAL(_fromUtf8("accepted()")), HelpDialog.accept)

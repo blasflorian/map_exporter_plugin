@@ -191,7 +191,6 @@ class MapExporter:
         self.dockwidget.closingPlugin.disconnect(self.onClosePlugin)
         self.dockwidget.pushButton_dir.clicked.disconnect(self.open_dir)
         self.dockwidget.pushButton_export.clicked.disconnect(self.on_export)
-        self.dockwidget.pushButton_help.clicked.disconnect(lambda: self.dlg_help.exec_())
         self.dockwidget.checkBox_all.clicked.disconnect(self.on_checkbox_clicked)
         self.iface.legendInterface().currentLayerChanged.disconnect(self.update_dropdown)
 
