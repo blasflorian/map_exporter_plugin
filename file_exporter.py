@@ -7,6 +7,8 @@ from PyQt4.QtXml import QDomDocument
 from qgis.core import QgsComposition
 from qgis.utils import iface
 
+from plugin_path import get_plugin_path
+
 
 class FileExporter:
 
@@ -15,7 +17,7 @@ class FileExporter:
         self.dockwidget = dockwidget
 
     def load_composition(self):
-        template_path = self.get_plugin_path() + self.templates[self.dockwidget.comboBox_template.currentText()]
+        template_path = get_plugin_path() + self.templates[self.dockwidget.comboBox_template.currentText()]
         template_file = open(template_path, "r")
         content = template_file.read()
         template_file.close()
@@ -64,7 +66,4 @@ class FileExporter:
 
     def get_templates(self):
         return [template for template in self.templates.keys()]
-
-    def get_plugin_path(self):
-        return os.path.dirname(os.path.realpath(__file__))
 

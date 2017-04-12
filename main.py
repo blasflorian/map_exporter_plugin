@@ -29,8 +29,12 @@ from qgis.utils import iface
 
 # Import the code for the DockWidget
 from file_exporter import FileExporter
+from help.help import Help
+from help.help_dialog import Ui_HelpDialog
 from main_dockwidget import MapExporterDockWidget
 import os.path
+
+from plugin_path import get_plugin_path
 
 
 class MapExporter:
@@ -75,8 +79,10 @@ class MapExporter:
 
         self.pluginIsActive = False
         self.dockwidget = None
-        self.cfg_file = self.get_plugin_path() + "/resources/usr.cfg"
+        self.cfg_file = get_plugin_path() + "/resources/usr.cfg"
         self.file_exporter = None
+
+        self.dlg_help = Help()
 
     # noinspection PyMethodMayBeStatic
     def tr(self, message):
@@ -185,6 +191,7 @@ class MapExporter:
         self.dockwidget.closingPlugin.disconnect(self.onClosePlugin)
         self.dockwidget.pushButton_dir.clicked.disconnect(self.open_dir)
         self.dockwidget.pushButton_export.clicked.disconnect(self.on_export)
+        self.dockwidget.pushButton_help.clicked.disconnect(lambda: self.dlg_help.exec_())
         self.dockwidget.checkBox_all.clicked.disconnect(self.on_checkbox_clicked)
         self.iface.legendInterface().currentLayerChanged.disconnect(self.update_dropdown)
 
@@ -196,7 +203,6 @@ class MapExporter:
 
         self.pluginIsActive = False
         self.save_cfg()
-
 
     def unload(self):
         """Removes the plugin menu item and icon from QGIS GUI."""
@@ -231,6 +237,7 @@ class MapExporter:
             # connect signals
             self.dockwidget.pushButton_dir.clicked.connect(self.open_dir)
             self.dockwidget.pushButton_export.clicked.connect(self.on_export)
+            self.dockwidget.pushButton_help.clicked.connect(lambda : self.dlg_help.exec_())
             self.dockwidget.checkBox_all.clicked.connect(self.on_checkbox_clicked)
             self.iface.legendInterface().currentLayerChanged.connect(self.update_dropdown)
 
@@ -349,5 +356,3 @@ class MapExporter:
         cfg_file = open(self.cfg_file, "w")
         cfg.write(cfg_file)
 
-    def get_plugin_path(self):
-        return os.path.dirname(os.path.realpath(__file__))
