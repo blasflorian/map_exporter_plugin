@@ -53,16 +53,16 @@ class FileExporter:
         c = self.load_composition()
         img = c.printPageAsRaster(0)
         if img.save(path, "png"):
-            iface.messageBar().pushMessage("PNG file successfully exported!", duration=5)
+            iface.messageBar().pushMessage("PNG file {} successfully exported!".format(path), duration=5)
         else:
-            iface.messageBar().pushMessage("Error while exporting png file", duration=5)
+            iface.messageBar().pushMessage("Error while exporting png file {}".format(path), duration=5)
 
     def create_pdf(self, path):
         c = self.load_composition()
         if c.exportAsPDF(path):
-            iface.messageBar().pushMessage("PDF file successfully exported", duration=5)
+            iface.messageBar().pushMessage("PDF file {} successfully exported".format(path), duration=5)
         else:
-            iface.messageBar().pushMessage("Error while exporting pdf file", duration=5)
+            iface.messageBar().pushMessage("Error while exporting pdf file {}".format(path), duration=5)
 
     def get_templates(self):
         return [template for template in self.templates.keys()]

@@ -20,6 +20,7 @@
  *                                                                         *
  ***************************************************************************/
 """
+import time
 from PyQt4.QtCore import QSettings, QTranslator, qVersion, QCoreApplication, Qt, pyqtSlot
 from PyQt4.QtGui import QAction, QIcon, QFileDialog, QMessageBox
 import ConfigParser
@@ -83,6 +84,8 @@ class MapExporter:
         self.file_exporter = None
 
         self.dlg_help = Help()
+
+        self.labeling_ids = {}
 
     # noinspection PyMethodMayBeStatic
     def tr(self, message):
@@ -299,38 +302,51 @@ class MapExporter:
                 return
         self.iface.legendInterface().setLayerVisible(layer, True)   # just in case user forgot
         for feat in layer.getFeatures():
-            self.dockwidget.lineEdit_filename.setText(usr_text.format(layername=layer.name(), choose_field=str(feat.attribute(self.dockwidget.comboBox_fields.currentText()))))
             layer.setSelectedFeatures([feat.id()])
             self.iface.mapCanvas().zoomToSelected()
             self.iface.mapCanvas().refresh()
             layer.removeSelection()
-            self.export()
+            self.export(feat)
         self.dockwidget.lineEdit_filename.setText(usr_text)
 
-    def export(self):
+    def export(self, feat=None):
         self.dockwidget.pushButton_export.setEnabled(False)
         png = self.dockwidget.checkBox_png.isChecked()
         pdf = self.dockwidget.checkBox_pdf.isChecked()
         # check if directory exists
-        if os.path.isdir(self.dockwidget.lineEdit_dir.text()) and len(self.dockwidget.lineEdit_filename.text()) != 0:
+        filename = self.get_file_name(feat)
+        if os.path.isdir(self.dockwidget.lineEdit_dir.text()) and len(filename) != 0:
             if png and pdf:
-                filepath_png = self.dockwidget.lineEdit_dir.text() + "/" + self.dockwidget.lineEdit_filename.text() + ".png"
-                filepath_pdf = self.dockwidget.lineEdit_dir.text() + "/" + self.dockwidget.lineEdit_filename.text() + ".pdf"
+                filepath_png = self.create_path(self.dockwidget.lineEdit_dir.text(), filename, "png")
+                filepath_pdf = self.create_path(self.dockwidget.lineEdit_dir.text(), filename, "pdf")
                 if self.file_exists(filepath_png):
                     self.file_exporter.create_png(filepath_png)
                 if self.file_exists(filepath_pdf):
                     self.file_exporter.create_pdf(filepath_pdf)
             elif png:
-                filepath = self.dockwidget.lineEdit_dir.text() + "/" + self.dockwidget.lineEdit_filename.text() + ".png"
+                filepath = self.create_path(self.dockwidget.lineEdit_dir.text(), filename, "png")
                 if self.file_exists(filepath):
                     self.file_exporter.create_png(filepath)
             elif pdf:
-                filepath = self.dockwidget.lineEdit_dir.text() + "/" + self.dockwidget.lineEdit_filename.text() + ".pdf"
+                filepath = self.create_path(self.dockwidget.lineEdit_dir.text(), filename, "pdf")
                 if self.file_exists(filepath):
                     self.file_exporter.create_pdf(filepath)
         else:
             self.iface.messageBar().pushMessage("Directory does not exist or no file name given!")
         self.dockwidget.pushButton_export.setEnabled(True)
+
+    def create_path(self, dir, filename, type):
+        path = dir + "/" + filename + "." + type
+        if "id" in filename:    # check if user wants to use id labeling feature
+            return path.replace("id", str(self.get_labeling_id(path)))
+        return path
+
+    def get_labeling_id(self, path):
+        if path in self.labeling_ids.keys():
+            self.labeling_ids[path] += 1
+        else:
+            self.labeling_ids[path] = 1
+        return self.labeling_ids[path]
 
     def file_exists(self, path):
         if os.path.isfile(path):
@@ -338,6 +354,29 @@ class MapExporter:
             if answer == QMessageBox.No:
                 return False
         return True
+
+    def get_file_name(self, feat=None, layer=iface.activeLayer()):
+        keywords = {"layername": layer.name(), "id": "id", "date": time.strftime("%x").replace("/", "-")}    # specify keywords
+        if self.dockwidget.checkBox_all.isChecked():
+            keywords["choose_field"] = str(feat.attribute(self.dockwidget.comboBox_fields.currentText()))
+        text = self.dockwidget.lineEdit_filename.text()
+        keywords_in_text = [fname for _, fname, _, _ in text._formatter_parser()]   # find keywords in text
+        if len(keywords_in_text) > 0 and (None not in keywords_in_text):  # if there are no keywords list has one element: None
+            # get the corresponding methods in correct order of appearance
+            methods = []
+            for key in keywords_in_text:
+                if key in keywords.keys():
+                    methods.append(keywords[key])
+                else:
+                    self.iface.messageBar().pushMessage("Keyword {} doesn't exist!".format(key))
+                    text = text.replace("{" + key + "}", "")
+            if len(methods) == 0:   # check if there are still any valid keywords left
+                return text
+            for keyword in keywords_in_text:
+                text = text.replace(keyword, "")   # delete keywords so formatting works without them
+            return text.format(*methods)
+        else:
+            return text
 
     def load_cfg(self):
         cfg = ConfigParser.RawConfigParser()
