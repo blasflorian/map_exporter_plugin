@@ -20,6 +20,7 @@
  *                                                                         *
  ***************************************************************************/
 """
+import time
 from PyQt4.QtCore import QSettings, QTranslator, qVersion, QCoreApplication, Qt, pyqtSlot
 from PyQt4.QtGui import QAction, QIcon, QFileDialog, QMessageBox
 import ConfigParser
@@ -83,6 +84,7 @@ class MapExporter:
         self.file_exporter = None
 
         self.dlg_help = Help()
+        self.id = 0
 
     # noinspection PyMethodMayBeStatic
     def tr(self, message):
@@ -313,19 +315,20 @@ class MapExporter:
         pdf = self.dockwidget.checkBox_pdf.isChecked()
         # check if directory exists
         if os.path.isdir(self.dockwidget.lineEdit_dir.text()) and len(self.dockwidget.lineEdit_filename.text()) != 0:
+            filename = self.get_file_name()
             if png and pdf:
-                filepath_png = self.dockwidget.lineEdit_dir.text() + "/" + self.dockwidget.lineEdit_filename.text() + ".png"
-                filepath_pdf = self.dockwidget.lineEdit_dir.text() + "/" + self.dockwidget.lineEdit_filename.text() + ".pdf"
+                filepath_png = self.dockwidget.lineEdit_dir.text() + "/" + filename + ".png"
+                filepath_pdf = self.dockwidget.lineEdit_dir.text() + "/" + filename + ".pdf"
                 if self.file_exists(filepath_png):
                     self.file_exporter.create_png(filepath_png)
                 if self.file_exists(filepath_pdf):
                     self.file_exporter.create_pdf(filepath_pdf)
             elif png:
-                filepath = self.dockwidget.lineEdit_dir.text() + "/" + self.dockwidget.lineEdit_filename.text() + ".png"
+                filepath = self.dockwidget.lineEdit_dir.text() + "/" + filename + ".png"
                 if self.file_exists(filepath):
                     self.file_exporter.create_png(filepath)
             elif pdf:
-                filepath = self.dockwidget.lineEdit_dir.text() + "/" + self.dockwidget.lineEdit_filename.text() + ".pdf"
+                filepath = self.dockwidget.lineEdit_dir.text() + "/" + filename + ".pdf"
                 if self.file_exists(filepath):
                     self.file_exporter.create_pdf(filepath)
         else:
@@ -338,6 +341,22 @@ class MapExporter:
             if answer == QMessageBox.No:
                 return False
         return True
+
+    def get_file_name(self, layer=iface.activeLayer()):
+        keywords = {"layername": layer.name(), "id": self.get_id(), "date": time.strftime("%x").replace("/", "-")}    # specify keywords
+        text = self.dockwidget.lineEdit_filename.text()
+        keywords_in_text = [fname for _, fname, _, _ in text._formatter_parser()]   # find keywords in text
+        if len(keywords_in_text) > 0 and (len(keywords_in_text) == 1 and keywords_in_text[0] is not None):  # if there are no keywords list has one element: None
+            methods = [keywords[key] for key in keywords_in_text]   # get the corresponding methods in correct order of appearance
+            for keyword in keywords_in_text:
+                text = text.replace(keyword, "")   # delete keywords so formatting works without them
+            return text.format(*methods)
+        else:
+            return text
+
+    def get_id(self):
+        self.id += 1
+        return self.id
 
     def load_cfg(self):
         cfg = ConfigParser.RawConfigParser()
