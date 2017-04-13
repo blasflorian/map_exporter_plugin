@@ -1,0 +1,35 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Title</title>
+</head>
+<body>
+    <h1>How to use this plugin</h1>
+    <h2>Functionality</h2>
+        <p>
+            This plugin lets you take a picture of the current map canvas. You can choose between
+            different templates and file types. First you have to choose a directory. This decision is separately
+            in case you have to take several screenshots. This allows you to easily put all exports in one directory.
+            Next you type in a filename. <u>Note:</u> You do not have to add a file ending for the type, only the name.
+        </p>
+
+    <h2>Automatic file name creation</h2>
+        <p>
+            To make you life easier and to allow you to export different map scenes with one click there's and option
+            to create file names automatically. You need to use keywords for this. Right now following keywords exist:
+            <ul>
+                <li>layername</li>
+                <li>id</li>
+                <li>date</li>
+            </ul>
+            All you have to do is put these keywords in brackets like this: {layername} and the file name is automatically
+            set to the layer's name. The keyword "id" is allowing you to distinguish between the pictures. So a simple
+            working example would be: {layername}_{id}. Now you just need to hit the export button and all the files
+            will be saved to the chosen directory. <u>Note:</u> You can add what you desire around the keywords, for
+            example: this-is-the-{id}-layer-with-name-{layername}
+            When using the option to export all features of the layer you can choose a field from the attribute table.
+            The label will then have the feature's value from the table.
+        </p>
+</body>
+</html>
