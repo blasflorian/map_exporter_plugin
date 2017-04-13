@@ -301,21 +301,20 @@ class MapExporter:
                 return
         self.iface.legendInterface().setLayerVisible(layer, True)   # just in case user forgot
         for feat in layer.getFeatures():
-            self.dockwidget.lineEdit_filename.setText(usr_text.format(layername=layer.name(), choose_field=str(feat.attribute(self.dockwidget.comboBox_fields.currentText()))))
             layer.setSelectedFeatures([feat.id()])
             self.iface.mapCanvas().zoomToSelected()
             self.iface.mapCanvas().refresh()
             layer.removeSelection()
-            self.export()
+            self.export(feat)
         self.dockwidget.lineEdit_filename.setText(usr_text)
 
-    def export(self):
+    def export(self, feat=None):
         self.dockwidget.pushButton_export.setEnabled(False)
         png = self.dockwidget.checkBox_png.isChecked()
         pdf = self.dockwidget.checkBox_pdf.isChecked()
         # check if directory exists
-        if os.path.isdir(self.dockwidget.lineEdit_dir.text()) and len(self.dockwidget.lineEdit_filename.text()) != 0:
-            filename = self.get_file_name()
+        filename = self.get_file_name(feat)
+        if os.path.isdir(self.dockwidget.lineEdit_dir.text()) and len(filename) != 0:
             if png and pdf:
                 filepath_png = self.dockwidget.lineEdit_dir.text() + "/" + filename + ".png"
                 filepath_pdf = self.dockwidget.lineEdit_dir.text() + "/" + filename + ".pdf"
@@ -342,12 +341,23 @@ class MapExporter:
                 return False
         return True
 
-    def get_file_name(self, layer=iface.activeLayer()):
+    def get_file_name(self, feat=None, layer=iface.activeLayer()):
         keywords = {"layername": layer.name(), "id": self.get_id(), "date": time.strftime("%x").replace("/", "-")}    # specify keywords
+        if self.dockwidget.checkBox_all.isChecked():
+            keywords["choose_field"] = str(feat.attribute(self.dockwidget.comboBox_fields.currentText()))
         text = self.dockwidget.lineEdit_filename.text()
         keywords_in_text = [fname for _, fname, _, _ in text._formatter_parser()]   # find keywords in text
-        if len(keywords_in_text) > 0 and (len(keywords_in_text) == 1 and keywords_in_text[0] is not None):  # if there are no keywords list has one element: None
-            methods = [keywords[key] for key in keywords_in_text]   # get the corresponding methods in correct order of appearance
+        if len(keywords_in_text) > 0 or (len(keywords_in_text) == 1 and keywords_in_text[0] is not None):  # if there are no keywords list has one element: None
+            # get the corresponding methods in correct order of appearance
+            methods = []
+            for key in keywords_in_text:
+                if key in keywords.keys():
+                    methods.append(keywords[key])
+                else:
+                    self.iface.messageBar().pushMessage("Keyword {} doesn't exist!".format(key))
+                    text = text.replace("{" + key + "}", "")
+            if len(methods) == 0:   # check if there are still any valid keywords left
+                return text
             for keyword in keywords_in_text:
                 text = text.replace(keyword, "")   # delete keywords so formatting works without them
             return text.format(*methods)
