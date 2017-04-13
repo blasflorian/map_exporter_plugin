@@ -9,7 +9,7 @@
 
 from PyQt4 import QtCore, QtGui
 from PyQt4.QtCore import QUrl
-from MapExporter.plugin_path import get_plugin_path
+from ..plugin_path import get_plugin_path
 
 try:
     _fromUtf8 = QtCore.QString.fromUtf8

@@ -27,11 +27,12 @@ import ConfigParser
 # Initialize Qt resources from file resources.py
 import resources
 from qgis.utils import iface
+from qgis.core import QgsMapLayerRegistry
+from qgis.gui import QgsMessageBar
 
 # Import the code for the DockWidget
 from file_exporter import FileExporter
 from help.help import Help
-from help.help_dialog import Ui_HelpDialog
 from main_dockwidget import MapExporterDockWidget
 import os.path
 
@@ -221,6 +222,9 @@ class MapExporter:
 
     def run(self):
         """Run method that loads and starts the plugin"""
+        if len(QgsMapLayerRegistry.instance().mapLayers().values()) == 0:
+            self.iface.messageBar().pushMessage("There must be at least one layer loaded!", level=QgsMessageBar.CRITICAL)
+            return
 
         if not self.pluginIsActive:
             self.pluginIsActive = True
@@ -368,7 +372,7 @@ class MapExporter:
                 if key in keywords.keys():
                     methods.append(keywords[key])
                 else:
-                    self.iface.messageBar().pushMessage("Keyword {} doesn't exist!".format(key))
+                    self.iface.messageBar().pushMessage("Keyword {} doesn't exist!".format(key), level=QgsMessageBar.CRITICAL)
                     text = text.replace("{" + key + "}", "")
             if len(methods) == 0:   # check if there are still any valid keywords left
                 return text

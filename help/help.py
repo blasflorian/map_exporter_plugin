@@ -1,4 +1,4 @@
-from MapExporter.help.help_dialog import Ui_HelpDialog
+from .help_dialog import Ui_HelpDialog
 from PyQt4.QtGui import QDialog
 
 
