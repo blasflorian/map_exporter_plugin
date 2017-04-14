@@ -77,8 +77,6 @@ class MapExporter:
         self.toolbar = self.iface.addToolBar(u'MapExporter')
         self.toolbar.setObjectName(u'MapExporter')
 
-        #print "** INITIALIZING MapExporter"
-
         self.pluginIsActive = False
         self.dockwidget = None
         self.cfg_file = get_plugin_path() + "/resources/usr.cfg"
@@ -86,6 +84,7 @@ class MapExporter:
 
         self.dlg_help = Help()
 
+        # save the ids according to path names
         self.labeling_ids = {}
 
     # noinspection PyMethodMayBeStatic
@@ -188,9 +187,6 @@ class MapExporter:
 
     def onClosePlugin(self):
         """Cleanup necessary items here when plugin dockwidget is closed"""
-
-        #print "** CLOSING MapExporter"
-
         # disconnects
         self.dockwidget.closingPlugin.disconnect(self.onClosePlugin)
         self.dockwidget.pushButton_dir.clicked.disconnect(self.open_dir)
@@ -209,9 +205,6 @@ class MapExporter:
 
     def unload(self):
         """Removes the plugin menu item and icon from QGIS GUI."""
-
-        #print "** UNLOAD MapExporter"
-
         for action in self.actions:
             self.iface.removePluginMenu(
                 self.tr(u'&Map Exporter'),
@@ -228,9 +221,6 @@ class MapExporter:
 
         if not self.pluginIsActive:
             self.pluginIsActive = True
-
-            #print "** STARTING MapExporter"
-
             # dockwidget may not exist if:
             #    first run of plugin
             #    removed on close (see self.onClosePlugin method)
@@ -261,16 +251,20 @@ class MapExporter:
 
     @pyqtSlot()
     def open_dir(self):
+        """Lets the user choose a directory."""
         dir_path = QFileDialog.getExistingDirectory(self.dockwidget, "Choose Directory", self.dockwidget.lineEdit_dir.text())
         self.dockwidget.lineEdit_dir.setText(dir_path)
 
     @pyqtSlot()
     def update_dropdown(self):
+        """ Update dropdown list. If multiple layers are selected, only those fields occurring in every layer
+            can be options for the user to choose from
+        """
         self.dockwidget.comboBox_fields.clear()
         if len(self.iface.legendInterface().selectedLayers()) >= 2:
             fields = []
             for layer in self.iface.legendInterface().selectedLayers():
-                fields.append(set([field.name() for field in layer.pendingFields()]))
+                fields.append(set([field.name() for field in layer.pendingFields()]))   # cast to set to use intersection method
             intersected_fields = set.intersection(*fields)
             self.dockwidget.comboBox_fields.addItems(list(intersected_fields))
         else:
@@ -296,6 +290,11 @@ class MapExporter:
             self.export()
 
     def export_all_features(self, layer):
+        """ Export ever feature of a layer
+        
+            :param layer: the layer of which the features should be exported 
+            :type layer: QgsVectorLayer
+        """
         if layer.featureCount() == 0:
             self.iface.messageBar().pushMessage("Layer has no features", duration=5)
             return
@@ -303,9 +302,10 @@ class MapExporter:
             answer = QMessageBox.question(self.dockwidget, "Warning", "Layer contains a lot of features. This could take a lot of time. Continue?", QMessageBox.Yes|QMessageBox.No)
             if answer == QMessageBox.No:
                 return
+
         self.iface.legendInterface().setLayerVisible(layer, True)   # just in case user forgot
-        self.iface.setActiveLayer(layer)    # set layer active so labeling works
-        for feat in layer.getFeatures():
+        self.iface.setActiveLayer(layer)    # set layer active so automatic labeling works
+        for feat in layer.getFeatures():    # zoom to every feature to export it
             layer.setSelectedFeatures([feat.id()])
             self.iface.mapCanvas().zoomToSelected()
             self.iface.mapCanvas().refresh()
@@ -313,10 +313,14 @@ class MapExporter:
             self.export(feat)
 
     def export(self, feat=None):
-        self.dockwidget.pushButton_export.setEnabled(False)
+        """ Exports the current map view
+        
+            :param feat: the feature that is currently exported
+            :type feat: QgsFeature
+        """
+        self.dockwidget.pushButton_export.setEnabled(False)     # a hint for the user if export is in progress
         png = self.dockwidget.checkBox_png.isChecked()
         pdf = self.dockwidget.checkBox_pdf.isChecked()
-        # check if directory exists
         filename = self.get_file_name(feat)
         if os.path.isdir(self.dockwidget.lineEdit_dir.text()) and len(filename) != 0:
             if png and pdf:
@@ -339,12 +343,36 @@ class MapExporter:
         self.dockwidget.pushButton_export.setEnabled(True)
 
     def create_path(self, dir, filename, type):
+        """ Build the path of the file. If the user wants to use a sequential id, replace the keyword with the
+            right id for the path
+            
+            :param dir: the directory
+            :type dir: str
+            
+            :param filename: the file name
+            :type filename: str
+            
+            :param type: the document type (pdf or png)
+            :type type: str
+            
+            :returns: the full path of the file
+            :rtype: str
+        """
         path = dir + "/" + filename + "." + type
-        if "id" in filename:    # check if user wants to use id labeling feature
-            return path.replace("id", str(self.get_labeling_id(path)))
+        if "id_key" in filename:    # check if user wants to use id labeling feature
+            return path.replace("id_key", str(self.get_labeling_id(path)))
         return path
 
     def get_labeling_id(self, path):
+        """ Looks up the correct sequential number corresponding to the path or create a dictionary entry for
+            the path. Basically this is just counting how often the name of the path occurred.
+        
+            :param path: the path of the file
+            :type path: str
+            
+            :returns: the id of the path
+            :rtype: int
+        """
         if path in self.labeling_ids.keys():
             self.labeling_ids[path] += 1
         else:
@@ -352,6 +380,14 @@ class MapExporter:
         return self.labeling_ids[path]
 
     def file_exists(self, path):
+        """ Checks if the file already exists and asks user how to proceed
+        
+            :param path: the file path
+            :type path: str
+            
+            :returns: if saving should be proceeded
+            :rtype: bool
+        """
         if os.path.isfile(path):
             answer = QMessageBox.question(self.dockwidget, "Warning", "File {} exists. Override?".format(path), QMessageBox.Yes|QMessageBox.No)
             if answer == QMessageBox.No:
@@ -359,12 +395,20 @@ class MapExporter:
         return True
 
     def get_file_name(self, feat=None):
-        keywords = {"layername": self.iface.activeLayer().name(), "id": "id", "date": time.strftime("%x").replace("/", "-")}    # specify keywords
+        """ Constructs the file name. User can enter keywords which need to be replaced with their current values.
+            
+            :param feat: the feature that is currently exported
+            :type feat: QgsFeature
+            
+            :returns: the file name
+            :rtype: str
+        """
+        keywords = {"layername": self.iface.activeLayer().name(), "id": "id_key", "date": time.strftime("%x").replace("/", "-")}    # specify available keywords
         if self.dockwidget.checkBox_all.isChecked():
             keywords["choose_field"] = str(feat.attribute(self.dockwidget.comboBox_fields.currentText()))
-        text = self.dockwidget.lineEdit_filename.text()
-        keywords_in_text = [fname for _, fname, _, _ in text._formatter_parser()]   # find keywords in text
-        if len(keywords_in_text) > 0 and (None not in keywords_in_text):  # if there are no keywords list has one element: None
+        text = self.dockwidget.lineEdit_filename.text()     # get user input
+        keywords_in_text = [fname for _, fname, _, _ in text._formatter_parser()]   # find the entered keywords
+        if len(keywords_in_text) > 0 and (None not in keywords_in_text):    # if there are no keywords list has one element which is None
             # get the corresponding methods in correct order of appearance
             methods = []
             for key in keywords_in_text:
@@ -372,16 +416,17 @@ class MapExporter:
                     methods.append(keywords[key])
                 else:
                     self.iface.messageBar().pushMessage("Keyword {} doesn't exist!".format(key), level=QgsMessageBar.CRITICAL)
-                    text = text.replace("{" + key + "}", "")
-            if len(methods) == 0:   # check if there are still any valid keywords left
+                    text = text.replace("{" + key + "}", "")    # delete none existing keywords
+            if len(methods) == 0:   # check if there are still any valid keywords left after potentially deleting some invalid ones
                 return text
             for keyword in keywords_in_text:
                 text = text.replace(keyword, "")   # delete keywords so formatting works without them
-            return text.format(*methods)
+            return text.format(*methods)    # format by unpacking methods since these are in the right order
         else:
             return text
 
     def load_cfg(self):
+        """Load settings from the user config file"""
         cfg = ConfigParser.RawConfigParser()
         cfg.read(self.cfg_file)
         self.dockwidget.checkBox_png.setChecked(cfg.getboolean("PNG", "clicked"))
@@ -389,6 +434,7 @@ class MapExporter:
         self.dockwidget.lineEdit_dir.setText(cfg.get("Directory", "path"))
 
     def save_cfg(self):
+        """Save settings so user does not have to reenter every option"""
         cfg = ConfigParser.SafeConfigParser()
         cfg.read(self.cfg_file)
         cfg.set("PNG", "clicked", str(self.dockwidget.checkBox_png.isChecked()))
