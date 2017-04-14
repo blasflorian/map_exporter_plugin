@@ -257,7 +257,7 @@ class MapExporter:
 
     @pyqtSlot()
     def update_dropdown(self):
-        """ Update dropdown list. If multiple layers are selected, only those fields occurring in every layer
+        """ Updates dropdown list. If multiple layers are selected, only those fields occurring in every layer
             can be options for the user to choose from
         """
         self.dockwidget.comboBox_fields.clear()
@@ -290,7 +290,7 @@ class MapExporter:
             self.export()
 
     def export_all_features(self, layer):
-        """ Export ever feature of a layer
+        """ Exports every feature of a layer
         
             :param layer: the layer of which the features should be exported 
             :type layer: QgsVectorLayer
@@ -343,7 +343,7 @@ class MapExporter:
         self.dockwidget.pushButton_export.setEnabled(True)
 
     def create_path(self, dir, filename, type):
-        """ Build the path of the file. If the user wants to use a sequential id, replace the keyword with the
+        """ Builds the path of the file. If the user wants to use a sequential id, replace the keyword with the
             right id for the path
             
             :param dir: the directory
@@ -426,7 +426,7 @@ class MapExporter:
             return text
 
     def load_cfg(self):
-        """Load settings from the user config file"""
+        """Loads settings from the user config file"""
         cfg = ConfigParser.RawConfigParser()
         cfg.read(self.cfg_file)
         self.dockwidget.checkBox_png.setChecked(cfg.getboolean("PNG", "clicked"))
@@ -434,7 +434,7 @@ class MapExporter:
         self.dockwidget.lineEdit_dir.setText(cfg.get("Directory", "path"))
 
     def save_cfg(self):
-        """Save settings so user does not have to reenter every option"""
+        """Saves settings so user does not have to reenter every option"""
         cfg = ConfigParser.SafeConfigParser()
         cfg.read(self.cfg_file)
         cfg.set("PNG", "clicked", str(self.dockwidget.checkBox_png.isChecked()))
