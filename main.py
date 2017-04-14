@@ -265,7 +265,7 @@ class MapExporter:
         self.dockwidget.lineEdit_dir.setText(dir_path)
 
     @pyqtSlot()
-    def update_dropdown(self, layer=iface.activeLayer()):
+    def update_dropdown(self):
         self.dockwidget.comboBox_fields.clear()
         if len(self.iface.legendInterface().selectedLayers()) >= 2:
             fields = []
@@ -274,7 +274,7 @@ class MapExporter:
             intersected_fields = set.intersection(*fields)
             self.dockwidget.comboBox_fields.addItems(list(intersected_fields))
         else:
-            fields = [field.name() for field in layer.pendingFields()]
+            fields = [field.name() for field in self.iface.activeLayer().pendingFields()]
             self.dockwidget.comboBox_fields.addItems(fields)
 
     @pyqtSlot()
@@ -296,7 +296,6 @@ class MapExporter:
             self.export()
 
     def export_all_features(self, layer):
-        usr_text = self.dockwidget.lineEdit_filename.text()
         if layer.featureCount() == 0:
             self.iface.messageBar().pushMessage("Layer has no features", duration=5)
             return
@@ -305,13 +304,13 @@ class MapExporter:
             if answer == QMessageBox.No:
                 return
         self.iface.legendInterface().setLayerVisible(layer, True)   # just in case user forgot
+        self.iface.setActiveLayer(layer)    # set layer active so labeling works
         for feat in layer.getFeatures():
             layer.setSelectedFeatures([feat.id()])
             self.iface.mapCanvas().zoomToSelected()
             self.iface.mapCanvas().refresh()
             layer.removeSelection()
             self.export(feat)
-        self.dockwidget.lineEdit_filename.setText(usr_text)
 
     def export(self, feat=None):
         self.dockwidget.pushButton_export.setEnabled(False)
@@ -359,8 +358,8 @@ class MapExporter:
                 return False
         return True
 
-    def get_file_name(self, feat=None, layer=iface.activeLayer()):
-        keywords = {"layername": layer.name(), "id": "id", "date": time.strftime("%x").replace("/", "-")}    # specify keywords
+    def get_file_name(self, feat=None):
+        keywords = {"layername": self.iface.activeLayer().name(), "id": "id", "date": time.strftime("%x").replace("/", "-")}    # specify keywords
         if self.dockwidget.checkBox_all.isChecked():
             keywords["choose_field"] = str(feat.attribute(self.dockwidget.comboBox_fields.currentText()))
         text = self.dockwidget.lineEdit_filename.text()
