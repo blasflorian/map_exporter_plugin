@@ -63,25 +63,35 @@ class FileExporter:
         
             :param path: the file path
             :type path: str
+            
+            :returns: state of success
+            :rtype: bool
         """
         c = self.load_composition()
         img = c.printPageAsRaster(0)
         if img.save(path, "png"):
             iface.messageBar().pushMessage("PNG file {} successfully exported!".format(path), duration=5)
+            return True
         else:
             iface.messageBar().pushMessage("Error while exporting png file {}".format(path), duration=5)
+            return False
 
     def create_pdf(self, path):
         """ Creates the pdf file
         
             :param path: the file path
             :type path: str
+            
+            :returns: state of success
+            :rtype: bool
         """
         c = self.load_composition()
         if c.exportAsPDF(path):
             iface.messageBar().pushMessage("PDF file {} successfully exported".format(path), duration=5)
+            return True
         else:
             iface.messageBar().pushMessage("Error while exporting pdf file {}".format(path), duration=5)
+            return False
 
     def get_templates(self):
         """ Creates a list of available templates

@@ -20,22 +20,21 @@
  *                                                                         *
  ***************************************************************************/
 """
+import ConfigParser
+import os.path
 import time
+
 from PyQt4.QtCore import QSettings, QTranslator, qVersion, QCoreApplication, Qt, pyqtSlot
 from PyQt4.QtGui import QAction, QIcon, QFileDialog, QMessageBox
-import ConfigParser
 # Initialize Qt resources from file resources.py
-import resources
-from qgis.utils import iface
 from qgis.core import QgsMapLayerRegistry
 from qgis.gui import QgsMessageBar
 
 # Import the code for the DockWidget
 from file_exporter import FileExporter
 from help.help import Help
+from mail.mail import Mail
 from main_dockwidget import MapExporterDockWidget
-import os.path
-
 from plugin_path import get_plugin_path
 
 
@@ -191,6 +190,7 @@ class MapExporter:
         self.dockwidget.closingPlugin.disconnect(self.onClosePlugin)
         self.dockwidget.pushButton_dir.clicked.disconnect(self.open_dir)
         self.dockwidget.pushButton_export.clicked.disconnect(self.on_export)
+        self.dockwidget.pushButton_mail.clicked.disconnect(self.send_mail)
         self.dockwidget.checkBox_all.clicked.disconnect(self.on_checkbox_clicked)
         self.iface.legendInterface().currentLayerChanged.disconnect(self.update_dropdown)
 
@@ -234,6 +234,7 @@ class MapExporter:
             self.dockwidget.pushButton_dir.clicked.connect(self.open_dir)
             self.dockwidget.pushButton_export.clicked.connect(self.on_export)
             self.dockwidget.pushButton_help.clicked.connect(lambda : self.dlg_help.exec_())
+            self.dockwidget.pushButton_mail.clicked.connect(self.send_mail)
             self.dockwidget.checkBox_all.clicked.connect(self.on_checkbox_clicked)
             self.iface.legendInterface().currentLayerChanged.connect(self.update_dropdown)
 
@@ -283,11 +284,13 @@ class MapExporter:
 
     @pyqtSlot()
     def on_export(self):
+        self.dockwidget.pushButton_export.setEnabled(False)     # a hint for the user if export is in progress
         if self.dockwidget.checkBox_all.isChecked():
             for layer in self.iface.legendInterface().selectedLayers():
                 self.export_all_features(layer)
         else:
             self.export()
+        self.dockwidget.pushButton_export.setEnabled(True)
 
     def export_all_features(self, layer):
         """ Exports every feature of a layer
@@ -317,8 +320,10 @@ class MapExporter:
         
             :param feat: the feature that is currently exported
             :type feat: QgsFeature
+            
+            :returns: filepath of created file
+            :rtype: str
         """
-        self.dockwidget.pushButton_export.setEnabled(False)     # a hint for the user if export is in progress
         png = self.dockwidget.checkBox_png.isChecked()
         pdf = self.dockwidget.checkBox_pdf.isChecked()
         filename = self.get_file_name(feat)
@@ -330,17 +335,24 @@ class MapExporter:
                     self.file_exporter.create_png(filepath_png)
                 if self.file_exists(filepath_pdf):
                     self.file_exporter.create_pdf(filepath_pdf)
+                # TODO: think of a solution here for mailing
             elif png:
                 filepath = self.create_path(self.dockwidget.lineEdit_dir.text(), filename, "png")
                 if self.file_exists(filepath):
-                    self.file_exporter.create_png(filepath)
+                    if self.file_exporter.create_png(filepath):
+                        return filepath
+                    else:
+                        return None
             elif pdf:
                 filepath = self.create_path(self.dockwidget.lineEdit_dir.text(), filename, "pdf")
                 if self.file_exists(filepath):
-                    self.file_exporter.create_pdf(filepath)
+                    if self.file_exporter.create_pdf(filepath):
+                        return filepath
+                    else:
+                        return None
         else:
             self.iface.messageBar().pushMessage("Directory does not exist or no file name given!")
-        self.dockwidget.pushButton_export.setEnabled(True)
+            return None
 
     def create_path(self, dir, filename, type):
         """ Builds the path of the file. If the user wants to use a sequential id, replace the keyword with the
@@ -424,6 +436,11 @@ class MapExporter:
             return text.format(*methods)    # format by unpacking methods since these are in the right order
         else:
             return text
+
+    def send_mail(self):
+        self.dockwidget.pushButton_export.setEnabled(False)
+        Mail(self).exec_()
+        self.dockwidget.pushButton_export.setEnabled(True)
 
     def load_cfg(self):
         """Loads settings from the user config file"""
